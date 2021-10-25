@@ -1,91 +1,57 @@
 # Libraries
 import os
-# import asyncio
 from discord.ext import commands
-import discord
-from datetime import datetime
-import pytz
-import requests
-from replit import db
+from datetime import datetime, time, timedelta
+import asyncio
 
 
-
-bot = commands.Bot(command_prefix="!")
-
+client = commands.Bot(command_prefix="!", help_command=None )
 my_secret = os.environ['Token']  #secret from a file
+WHEN = time(8, 50, 0)  # 6:00 PM
+channel_id = 902026655231520769
 
-@bot.event
+# events
+@client.event
 async def on_ready():
-  print(f'Logged on as {bot.user.name}!')
 
-# @bot.event
-# async def on_message(message):
-#    print(f'Message from {message.author}: {message.content}')
+  print(f"{client.user} is ready")
 
+###########################################################################
+""""""""""""""""""
+ # REMINDER BOT #
+""""""""""""""""""
 
-@bot.command()
-async def date(ctx):
+async def called_once_a_day():  # Fired every day
+  await client.wait_until_ready()  # Make sure your guild cache is ready so the channel can be found via get_channel
+  channel = client.get_channel(channel_id) # Note: It's more efficient to do bot.get_guild(guild_id).get_channel(channel_id) as there's less looping involved, but just get_channel still works fine
+  message = "Coding in 10 minutes"
+  await channel.send(message)
 
-  today = datetime.now()  # get time today
-  eastern = pytz.timezone('US/Eastern')  # object
-  today = today.astimezone(eastern)  # method(object)
-  todayString = today.strftime("Date: %B %d %Y \nTime: %I:%M %p")
+async def background_task():
+  now = datetime.utcnow()
+  if now.time() > WHEN:  # Make sure loop doesn't start after {WHEN} as then it will send immediately the first time as negative seconds will make the sleep yield instantly
 
-  await ctx.channel.send(todayString)
+    tomorrow = datetime.combine(now.date() + timedelta(days=1), time(0))
+    seconds = (tomorrow - now).total_seconds()  # Seconds until tomorrow (midnight)
+    await asyncio.sleep(seconds)   # Sleep until tomorrow and then the loop will start 
 
-@bot.command()
-async def meme(ctx):
-  url = "https://meme-api.herokuapp.com/gimme"
-  response = requests.get(url)
-  json = response.json()
-  link = json["postLink"]
-  imgUrl = json["url"]
+  while True:
+    now = datetime.utcnow() # You can do now() or a specific timezone if that matters, but I'll leave it with utcnow
+    target_time = datetime.combine(now.date(), WHEN)  # 6:00 PM today (In UTC)
+    seconds_until_target = (target_time - now).total_seconds()
+    await asyncio.sleep(seconds_until_target)  # Sleep until we hit the target time
+    await called_once_a_day()  # Call the helper function that sends the message
+    tomorrow = datetime.combine(now.date() + timedelta(days=1), time(0))
+    seconds = (tomorrow - now).total_seconds()  # Seconds until tomorrow (midnight)
+    await asyncio.sleep(seconds)   # Sleep until tomorrow and then the loop will start a new iteration
   
-  await ctx.channel.send(imgUrl)
-  await ctx.channel.send(link)
+extensions = ['cogs.CommandEvents','cogs.DatabaseCommands','cogs.MiscCommands']
 
 
-@bot.command()
-async def sup(ctx):
-  await ctx.channel.send(f"Sup {ctx.author.mention}")
-
-
-@bot.command()
-async def createDB(ctx, picName, link):
-  #save and image
-  try:
-    db[picName]
-    await ctx.channel.send("Image already saved!")
-
-  except:
-    db[picName] = link
-    await ctx.channel.send("Image Saved!")
-
-@bot.command()
-async def getDB(ctx, picName):
-  #getPic
-
-  try:
-    await ctx.channel.send(picName)
-    await ctx.channel.send(db[picName])
-  except:
-    await ctx.channel.send("pic does not exist")
-
-@bot.command()
-async def remove(ctx, key):
-
-  del db[key]
-  list()
-  await ctx.channel.send(f"Removed {key}")
-
-@bot.command()
-async def list(ctx):
+if __name__ == '__main__':
+  for ext in extensions:
+    client.load_extension(ext)
   
-  for key in db:
-    values = db[key]
-    await ctx.channel.send(f"{key}: {values}")
-
-
-  
-bot.run(my_secret)  #to run the bot, param is the bot token/password
+client.loop.create_task(background_task())
+client.run(my_secret)  #to run the bot, param is the bot token/password
 

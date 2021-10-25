@@ -1,3 +1,12 @@
 {
-  "files": {}
+  "files": {
+    "CommandEvents.py": [
+      {
+        "id": "aa6eb46a-9c8c-4a1d-aaa3-3a7d068256bf",
+        "line": 14,
+        "version": 364,
+        "index": 267
+      }
+    ]
+  }
 }
