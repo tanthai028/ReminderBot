@@ -1,6 +1,7 @@
 from discord.ext import commands
 from replit import db
 from datetime import datetime
+import discord
 import pytz
 
 class DatabaseCommands(commands.Cog):
@@ -9,7 +10,7 @@ class DatabaseCommands(commands.Cog):
 
     
   # CREATE DB KEY, VALUES
-  @commands.command(name='create', aliases=['save'])
+  @commands.command(name='create', aliases=['save', 'add'])
   async def createDB(self, ctx, picName, link):
     try:
       db[picName]
@@ -19,7 +20,7 @@ class DatabaseCommands(commands.Cog):
       today =  datetime.now()
       eastern = pytz.timezone('US/Eastern')  # object
       today = today.astimezone(eastern)  # method(object)
-      todayString = today.strftime("Date: %B %d %Y")
+      todayString = today.strftime("%B %d %Y")
 
       db[picName] = {
         "date": str(todayString),
@@ -56,10 +57,24 @@ class DatabaseCommands(commands.Cog):
   # LIST DB
   @commands.command(name='list')
   async def listDB(self, ctx):
+
+    if not db:
+      await ctx.channel.send("Nothing in the database")
+      return
+
+    embed = discord.Embed(
+      title = "Python Database",
+      color = discord.Color.red()
+    )
+    
     
     for key in db:
-      values = db[key]
-      await ctx.channel.send(f"{key}: {values}")
+      print(db[key])
+      value='\n'.join([f"{values.capitalize()}: {db[key][values]}" for values in db[key]])
+      embed.add_field(name=key.capitalize(), value=value, inline=False)
+
+
+    await ctx.send(embed=embed)
 
 
 def setup(bot):

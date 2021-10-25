@@ -8,11 +8,18 @@ class MiscCommands(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
+  @commands.command(name="clear", description="Purge messages")
+  async def clear_command(self, ctx, amount = 2):
+    amount = int(amount)
+    await ctx.channel.purge(limit=amount)
+    
   # GET MEME
-  @commands.command(name='meme')
-  async def getMeme(self, ctx):
+  @commands.command(name="meme", aliases=['reddit','r','m'], description="Get latest memes from reddit")
+  async def meme_command(self, ctx, subreddit = "", count = ""):
     # Request json from api
-    url = "https://meme-api.herokuapp.com/gimme"
+    await ctx.channel.purge(limit=1)
+
+    url = "https://meme-api.herokuapp.com/gimme/" + subreddit + "/" + count
     json = requests.get(url).json()
 
     # Get data from json
@@ -21,6 +28,8 @@ class MiscCommands(commands.Cog):
     link = json["postLink"]
     imgUrl = json["url"]
     footer = json["subreddit"]
+
+    # print(title_string, title_string.capitalize())
 
     # Create embed
     embed = discord.Embed(
@@ -51,10 +60,21 @@ class MiscCommands(commands.Cog):
     today = datetime.now()  # get time today
     eastern = pytz.timezone('US/Eastern')  # object
     today = today.astimezone(eastern)  # method(object)
-    todayString = today.strftime("Date: %B %d %Y \nTime: %I:%M %p")
+    todayString = today.strftime("%B %d %Y")
+    timeString = today.strftime("%I:%M %p")
 
-    await ctx.channel.send(todayString)
+    embed = discord.Embed(
+      title = "Today",
+      color = discord.Color.green()
+    )
+
+    embed.add_field(name='Date', value=todayString, inline=False)
+    embed.add_field(name='Time', value=timeString)
+
+    await ctx.send(embed=embed)
+  
 
 def setup(bot):
-
-    bot.add_cog(MiscCommands(bot))
+  
+  bot.add_cog(MiscCommands(bot))
+  

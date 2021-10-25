@@ -12,6 +12,7 @@ pytz = "^2021.3"
 response = "^0.5.0"
 requests = "^2.26.0"
 schedule = "^1.1.0"
+discord-ext-slash = "^0.8.1"
 
 [tool.poetry.dev-dependencies]
 
